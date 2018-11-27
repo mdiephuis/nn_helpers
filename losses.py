@@ -4,7 +4,8 @@ import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
 import torch.distributions as D
-from utils import t_type_int, t_type_double, t_type_float
+
+from nn_helpers.utils import type_tint, type_tdouble, type_tfloat
 
 
 def loss_bce_kld(x, x_hat, mu, log_var):
@@ -14,7 +15,7 @@ def loss_bce_kld(x, x_hat, mu, log_var):
     https://arxiv.org/abs/1312.6114
     0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     """
-    BCE = F.binary_cross_entropy(x_hat, x, size_average=True)
+    BCE = F.binary_cross_entropy(x_hat, x, reduction='elementwise_mean')
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
     return KLD + BCE
@@ -38,7 +39,7 @@ class EarlyStopping(object):
             self.best = metrics
             return False
 
-        if np.isnan(metrics):
+        if np.isnan(metrics.detach().numpy()):
             return True
 
         if self.is_better(metrics, self.best):

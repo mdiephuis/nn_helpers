@@ -4,7 +4,8 @@ import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
 import torch.distributions as D
-from utils import t_type_int, t_type_double, t_type_float
+
+from nn_helpers.utils import type_tint, type_tdouble, type_tfloat
 
 
 def kl_divergence_np(p, q):
@@ -17,7 +18,7 @@ def kl_divergence_np(p, q):
 def bce_accuracy(pred_logits, targets, size_average=True):
     # https://github.com/jramapuram/helpers/blob/master/metrics.py
     cuda = pred_logits.is_cuda
-    input_pred = F.sigmoid(pred_logits).type(t_type_int(cuda))
-    targets = targets.type(t_type_int(cuda))
+    input_pred = F.sigmoid(pred_logits).type(type_tint(cuda))
+    targets = targets.type(type_tint(cuda))
     reduction_fn = torch.mean if size_average else torch.sum
-    return reduction_fn(input_pred.eq(targets).cpu().type(t_type_float(False)))
+    return reduction_fn(input_pred.eq(targets).cpu().type(type_tfloat(False)))
