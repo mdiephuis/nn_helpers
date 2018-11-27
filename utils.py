@@ -6,20 +6,24 @@ import torch.nn.functional as F
 import torch.distributions as D
 
 
-def t_type_double(use_cuda=False):
+def type_tdouble(use_cuda=False):
     return torch.cuda.DoubleTensor if use_cuda else torch.DoubleTensor
 
 
-def t_type_float(use_cuda=False):
+def type_tfloat(use_cuda=False):
     return torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
 
-def t_type_int(use_cuda=False):
+def type_tint(use_cuda=False):
     return torch.cuda.IntTensor if use_cuda else torch.IntTensor
 
 
-def t_type_long(use_cuda=False):
+def type_tlong(use_cuda=False):
     return torch.cuda.LongTensor if use_cuda else torch.LongTensor
+
+
+def dummy_context():
+    yield None
 
 
 def one_hot_np(labels, n_class):
@@ -35,7 +39,7 @@ def one_hot(labels, n_class):
     if len(list(labels.size())) == 1:
         labels = labels.unsqueeze()
 
-    mask = t_type_double()(labels.size(0), n_class).fill_(0)
+    mask = type_tdouble()(labels.size(0), n_class).fill_(0)
 
     # scatter dimension, position indices, fill_value
     mask.scatter_(1, labels, 1)
