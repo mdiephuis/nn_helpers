@@ -1,7 +1,8 @@
 import os
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
+from torch.nn import init
 import torch.nn.functional as F
 import torch.distributions as D
 
@@ -43,3 +44,14 @@ def one_hot(labels, n_class):
 
     # scatter dimension, position indices, fill_value
     mask.scatter_(1, labels, 1)
+
+
+def init_weights(module):
+    for m in module.modules():
+        if isinstance(m, nn.Linear) or isinstance(m, nn.ConvTranspose2d):
+            init.xavier_uniform_(m.weight.data)
+            if hasattr(m, 'bias') and m.bias is not None:
+                init.constant_(m.bias, 0.0)
+        elif isinstance(m, nn.Sequential):
+            for sub_mod in m:
+                init_weights(sub_mod)
