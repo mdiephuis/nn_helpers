@@ -1,10 +1,7 @@
-import os
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn import init
-import torch.nn.functional as F
-import torch.distributions as D
 
 
 def type_tdouble(use_cuda=False):
@@ -38,12 +35,12 @@ def one_hot(labels, n_class):
 
     # Ensure labels are [N x 1]
     if len(list(labels.size())) == 1:
-        labels = labels.unsqueeze()
+        labels = labels.unsqueeze(1)
 
     mask = type_tdouble()(labels.size(0), n_class).fill_(0)
 
     # scatter dimension, position indices, fill_value
-    mask.scatter_(1, labels, 1)
+    return mask.scatter_(1, labels, 1)
 
 
 def init_weights(module):

@@ -38,4 +38,4 @@ class VisdomGrapher:
         Update visdomplot by win_title with a scalar value.
         If it doesn't exist, create a new plot by default
         '''
-        self.vis.images(image, win=idtag, opts=dict(title='plot_name'))
+        self.vis.images(image, win=idtag, opts=dict(title=plot_name))

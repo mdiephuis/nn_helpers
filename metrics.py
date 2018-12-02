@@ -1,11 +1,8 @@
-import os
 import torch
-import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
-import torch.distributions as D
 
-from nn_helpers.utils import type_tint, type_tdouble, type_tfloat
+from nn_helpers.utils import type_tint, type_tfloat
 
 
 def kl_divergence_np(p, q):

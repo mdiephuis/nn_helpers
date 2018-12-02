@@ -1,11 +1,6 @@
-import os
 import torch
-import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
-import torch.distributions as D
-
-from nn_helpers.utils import type_tint, type_tdouble, type_tfloat
 
 
 def loss_bce_kld(x, x_hat, mu, log_var):
