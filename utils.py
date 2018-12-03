@@ -4,6 +4,28 @@ import torch.nn as nn
 from torch.nn import init
 
 
+# https://github.com/jramapuram/helpers/utils.py
+def ones(shape, cuda, dtype='float32'):
+    shape = list(shape) if isinstance(shape, tuple) else shape
+    return type_map[dtype](cuda)(*shape).zero_() + 1
+
+
+# https://github.com/jramapuram/helpers/utils.py
+def zeros(shape, cuda, dtype='float32'):
+    shape = list(shape) if isinstance(shape, tuple) else shape
+    return type_map[dtype](cuda)(*shape).zero_()
+
+
+# https://github.com/jramapuram/helpers/utils.py
+def randn(shape, cuda, mean=0, sigma=1, dtype='float32'):
+    shape = list(shape) if isinstance(shape, tuple) else shape
+    return type_map[dtype](cuda)(*shape).normal_(mean, sigma)
+
+
+def eye(n_elem, cuda, dtype='float32'):
+    return torch.eye(n_elem).type(type_map[dtype](cuda))
+
+
 def type_tdouble(use_cuda=False):
     return torch.cuda.DoubleTensor if use_cuda else torch.DoubleTensor
 
@@ -22,6 +44,12 @@ def type_tlong(use_cuda=False):
 
 def dummy_context():
     yield None
+
+
+def to_cuda(tensor):
+    if isinstance(tensor, torch.Tensor):
+        tensor = tensor.cuda()
+    return tensor
 
 
 def one_hot_np(labels, n_class):
@@ -52,3 +80,13 @@ def init_weights(module):
         elif isinstance(m, nn.Sequential):
             for sub_mod in m:
                 init_weights(sub_mod)
+
+
+# https://github.com/jramapuram/helpers/utils.py
+type_map = {
+    'float32': type_tfloat,
+    'float64': type_tdouble,
+    'double': type_tdouble,
+    'int32': type_tint,
+    'int64': type_tlong
+}
