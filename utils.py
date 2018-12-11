@@ -82,6 +82,8 @@ def init_weights(module):
                 init_weights(sub_mod)
 
 
+
+
 # https://github.com/jramapuram/helpers/utils.py
 type_map = {
     'float32': type_tfloat,
