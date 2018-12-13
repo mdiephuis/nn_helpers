@@ -52,6 +52,16 @@ def to_cuda(tensor):
     return tensor
 
 
+def sample_uniform(shape, use_cuda, a=-1, b=1):
+    shape = list(shape) if isinstance(shape, tuple) else shape
+    return type_tfloat(use_cuda)(*shape).uniform_(a, b)
+
+
+def sample_normal(shape, use_cuda, mu=0, sigma=1):
+    shape = list(shape) if isinstance(shape, tuple) else shape
+    return type_tfloat(use_cuda)(*shape).normal_(mu, sigma)
+
+
 def one_hot_np(labels, n_class):
     vec = np.zeros((labels.shape[0], n_class))
     for ind, label in enumerate(labels):
@@ -80,8 +90,6 @@ def init_weights(module):
         elif isinstance(m, nn.Sequential):
             for sub_mod in m:
                 init_weights(sub_mod)
-
-
 
 
 # https://github.com/jramapuram/helpers/utils.py
