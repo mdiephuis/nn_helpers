@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 from nn_helpers.utils import sample_normal
+from nn_helpers.utils import type_tfloat
 
 
 def loss_bce_kld(x, x_hat, mu, log_var):
@@ -17,26 +18,32 @@ def loss_bce_kld(x, x_hat, mu, log_var):
     return KLD + BCE
 
 
-def MSE_kernel(p, q, sigma=1):
+def MSE_kernel(p, q, sigma, use_cuda):
     p_tiled = p.expand(p.size(0), q.size(0), p.size(1))
     q_tiled = q.expand(p.size(0), q.size(0), p.size(1)).transpose(0, 1)
 
     loss_func = torch.nn.MSELoss(reduction='elementwise_mean')
     nom = - loss_func(p_tiled, q_tiled)
-    denom = 2 * torch.pow(sigma, 2)
-    return torch.exp(nom / denom).item()
+
+    const_val = type_tfloat(use_cuda)(1).zero_() + 2.0
+    sigma = type_tfloat(use_cuda)(1).zero_() + sigma
+    denom = torch.mul(const_val, torch.pow(sigma, 2))
+
+    return torch.exp(torch.div(nom, denom)).item()
 
 
-def loss_mmd(p, q, kernel_func=MSE_kernel):
-    pp = kernel_func(p, p)
-    qq = kernel_func(q, q)
-    pq = kernel_func(p, q)
+def loss_mmd(p, q, kernel_func, sigma, use_cuda):
+    pp = kernel_func(p, p, sigma, use_cuda)
+    qq = kernel_func(q, q, sigma, use_cuda)
+    pq = kernel_func(p, q, sigma, use_cuda)
+
     return pp + qq - 2 * pq
 
 
-def loss_infovae(x, x_hat, z, use_cuda):
+def loss_infovae(x, x_hat, z, sigma, use_cuda):
     true_samples = sample_normal(z.size(), use_cuda)
-    mmd = loss_mmd(true_samples, z)
+    mmd = loss_mmd(true_samples, z, MSE_kernel, sigma, use_cuda)
+
     nll_func = torch.nn.MSELoss(reduction='elementwise_mean')
     nll = nll_func(x, x_hat)
 
