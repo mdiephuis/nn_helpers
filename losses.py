@@ -22,7 +22,7 @@ def MSE_kernel(p, q, sigma, use_cuda):
     p_tiled = p.expand(p.size(0), q.size(0), p.size(1))
     q_tiled = q.expand(p.size(0), q.size(0), p.size(1)).transpose(0, 1)
 
-    loss_func = torch.nn.MSELoss(reduction='elementwise_mean')
+    loss_func = torch.nn.MSELoss(reduction='mean')
     nom = - loss_func(p_tiled, q_tiled)
 
     const_val = type_tfloat(use_cuda)(1).zero_() + 2.0
@@ -44,7 +44,7 @@ def loss_infovae(x, x_hat, z, sigma, use_cuda):
     true_samples = sample_normal(z.size(), use_cuda)
     mmd = loss_mmd(true_samples, z, MSE_kernel, sigma, use_cuda)
 
-    nll_func = torch.nn.MSELoss(reduction='elementwise_mean')
+    nll_func = torch.nn.MSELoss(reduction='mean')
     nll = nll_func(x, x_hat)
 
     return mmd + nll

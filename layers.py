@@ -49,7 +49,6 @@ class DCGAN_Encoder(nn.Module):
         H_conv_out = conv_size(input_shape[-1], 4, 2, 1)
         H_conv_out = conv_size(H_conv_out, 4, 2, 1)
         convnet_out = np.int(H_conv_out * H_conv_out * out_channels * 2)
-        print(convnet_out)
         self.H_conv_out = H_conv_out
 
         self.encoder = nn.ModuleList([
