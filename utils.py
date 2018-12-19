@@ -81,6 +81,16 @@ def one_hot(labels, n_class):
     return mask.scatter_(1, labels, 1)
 
 
+def nan_break(input, name=""):
+    if isinstance(input, list) or isinstance(input, tuple):
+        for tensor in input:
+            return(nan_break(tensor, name))
+    else:
+        if torch.sum(torch.isnan(tensor)) > 0:
+            print("Tensor {} with shape {} was NaN.".format(name, tensor.shape))
+            exit(-1)
+
+
 def init_weights(module):
     for m in module.modules():
         if isinstance(m, nn.Linear) or isinstance(m, nn.ConvTranspose2d):
