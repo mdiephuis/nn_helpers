@@ -81,14 +81,41 @@ def one_hot(labels, n_class):
     return mask.scatter_(1, labels, 1)
 
 
-def nan_break(input, name=""):
+def nan_check_and_break(tensor, name=""):
     if isinstance(input, list) or isinstance(input, tuple):
         for tensor in input:
-            return(nan_break(tensor, name))
+            return(nan_check_and_break(tensor, name))
+    else:
+        if nan_check(tensor, name) is True:
+            exit(-1)
+
+
+def nan_check(tensor, name=""):
+    if isinstance(input, list) or isinstance(input, tuple):
+        for tensor in input:
+            return(nan_check(tensor, name))
     else:
         if torch.sum(torch.isnan(tensor)) > 0:
             print("Tensor {} with shape {} was NaN.".format(name, tensor.shape))
-            exit(-1)
+            return True
+
+        elif torch.sum(torch.isinf(tensor)) > 0:
+            print("Tensor {} with shape {} was Inf.".format(name, tensor.shape))
+            return True
+
+    return False
+
+
+def zero_check_and_break(tensor, name=""):
+    if torch.sum(tensor == 0).item() > 0:
+        print("tensor {} of {} dim contained ZERO!!".format(name, tensor.shape))
+        exit(-1)
+
+
+def all_zero_check_and_break(tensor, name=""):
+    if torch.sum(tensor == 0).item() == np.prod(list(tensor.shape)):
+        print("tensor {} of {} dim was all zero".format(name, tensor.shape))
+        exit(-1)
 
 
 def init_weights(module):
