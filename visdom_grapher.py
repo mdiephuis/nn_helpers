@@ -1,4 +1,5 @@
 from visdom import Visdom
+import torchvision
 import numpy as np
 import time
 
@@ -15,7 +16,7 @@ class VisdomGrapher:
 
         # optional, time out connection
 
-    def add_scalar(self, plot_name, idtag, y, x, opts={}):
+    def add_scalar(self, y, x, plot_name, idtag, opts={}):
         '''
         Update vidomplot by win_title with a scalar value.
         If it doesn't exist, create a new plot
@@ -45,9 +46,14 @@ class VisdomGrapher:
         opts = {**opts, **{'title': plot_name}}
         self.vis.histogram(x, win=idtag, opts=opts)
 
-    def add_image(self, plot_name, idtag, image):
+    def add_image(self, image, plot_name, idtag):
         '''
         Update visdomplot by win_title with a scalar value.
         If it doesn't exist, create a new plot by default
         '''
         self.vis.images(image, win=idtag, opts=dict(title=plot_name))
+
+    def add_tensor_grid(self, batch_tensor, plot_name, idtag, nrow):
+        # .permute(1, 2, 0)
+        grid_image = torchvision.utils.make_grid(batch_tensor, nrow=nrow)
+        self.add_image(grid_image, plot_name, idtag)

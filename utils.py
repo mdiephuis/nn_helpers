@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn import init
+import torchvision
 
 
 # https://github.com/jramapuram/helpers/utils.py
@@ -127,6 +128,23 @@ def init_weights(module):
         elif isinstance(m, nn.Sequential):
             for sub_mod in m:
                 init_weights(sub_mod)
+
+
+def plot_tensor_grid(batch_tensor, save_filename=None):
+    ''' Helper to visualize a batch of images.
+        A non-None filename saves instead of doing a show()
+        This function needs the following to be set, prior to use
+            import matplotlib
+            matplotlib.use('Agg')
+    '''
+    import matplotlib.pyplot as plt
+
+    grid_img = torchvision.utils.make_grid(batch_tensor, nrow=5)
+    plt.imshow(grid_img.permute(1, 2, 0))
+    if save_filename is not None:
+        torchvision.utils.save_image(batch_tensor, save_filename, padding=5)
+    else:
+        plt.show()
 
 
 # https://github.com/jramapuram/helpers/utils.py
