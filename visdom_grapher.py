@@ -57,3 +57,24 @@ class VisdomGrapher:
         # .permute(1, 2, 0)
         grid_image = torchvision.utils.make_grid(batch_tensor, nrow=nrow)
         self.add_image(grid_image, plot_name, idtag)
+
+    def add_scatter2d(self, x, labels, plot_name, idtag, reinit=True, opts={}):
+        # check if graph exists
+        exists = self.vis.win_exists(idtag) and not reinit
+
+        # check for single values
+        if x.shape[0] == 1:
+            x = np.array([x])
+            labels = np.array([labels])
+
+        # Labels should start at 1
+        if np.amin(labels) == 0:
+            labels += 1
+
+        # update existing window
+        if exists:
+            self.vis.scatter(x, labels, win=idtag,
+                             update='append', opts=opts)
+        else:
+            self.vis.scatter(x, labels, win=idtag,
+                             opts={'title': plot_name})
