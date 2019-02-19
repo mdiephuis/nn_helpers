@@ -19,3 +19,9 @@ def bce_accuracy(pred_logits, targets, size_average=True):
     targets = targets.type(type_tint(cuda))
     reduction_fn = torch.mean if size_average else torch.sum
     return reduction_fn(input_pred.eq(targets).cpu().type(type_tfloat(False)))
+
+
+def chi2_distance_np(p, q, eps=1e-10):
+    p = np.asarray(p)
+    q = np.asarray(q)
+    return 0.5 * np.sum(((p - q) ** 2) / (p + q + eps))
