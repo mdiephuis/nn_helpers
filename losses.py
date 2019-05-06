@@ -12,7 +12,7 @@ def loss_bce_kld(x, x_hat, mu, log_var):
     https://arxiv.org/abs/1312.6114
     0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     """
-    BCE = F.binary_cross_entropy(x_hat.view(-1, 1), x.view(-1, 1), reduction='elementwise_mean')
+    BCE = F.binary_cross_entropy(x_hat.view(-1, 1), x.view(-1, 1), reduction='mean')
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
     return KLD + BCE
