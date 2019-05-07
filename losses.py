@@ -33,6 +33,10 @@ def MSE_kernel(p, q, sigma, use_cuda):
 
 
 def loss_mmd(p, q, kernel_func, sigma, use_cuda):
+    '''
+    Maximum Mean Discrepancy based loss using kernel embedding trick
+    Two distributions are identical iff all their moments are the same. (Gretton, 2007)
+    '''
     pp = kernel_func(p, p, sigma, use_cuda)
     qq = kernel_func(q, q, sigma, use_cuda)
     pq = kernel_func(p, q, sigma, use_cuda)
