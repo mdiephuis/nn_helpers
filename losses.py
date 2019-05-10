@@ -12,7 +12,8 @@ def loss_bce_kld(x, x_hat, mu, log_var):
     https://arxiv.org/abs/1312.6114
     0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     """
-    BCE = F.binary_cross_entropy(x_hat.view(-1, 1), x.view(-1, 1), reduction='mean')
+    BCE = F.binary_cross_entropy(
+        x_hat.view(-1, 1), x.view(-1, 1), reduction='mean')
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
     return KLD + BCE
@@ -32,7 +33,7 @@ def MSE_kernel(p, q, sigma, use_cuda):
     return torch.exp(torch.div(nom, denom)).item()
 
 
-def loss_mmd(p, q, kernel_func, sigma, use_cuda):
+def max_mean_discrepancy(p, q, kernel_func, sigma, use_cuda):
     '''
     Maximum Mean Discrepancy based loss using kernel embedding trick
     Two distributions are identical iff all their moments are the same. (Gretton, 2007)
@@ -44,14 +45,42 @@ def loss_mmd(p, q, kernel_func, sigma, use_cuda):
     return pp + qq - 2 * pq
 
 
-def loss_infovae(x, x_hat, z, sigma, use_cuda):
+def loss_mmd(x, x_hat, z, sigma, use_cuda):
+    ''' 
+    Maximizing Variational Autoencoders (MMD-VAE) loss
+    '''
     true_samples = sample_normal(z.size(), use_cuda)
-    mmd = loss_mmd(true_samples, z, MSE_kernel, sigma, use_cuda)
+    mmd = max_mean_discrepancy(true_samples, z, MSE_kernel, sigma, use_cuda)
 
     nll_func = torch.nn.MSELoss(reduction='mean')
     nll = nll_func(x, x_hat)
 
     return mmd + nll
+
+
+def loss_elbo(z_mu, z_std):
+    loss = torch.mean(torch.sum(-torch.log(z_std) + 0.5 * torch.pow(z_std, 2) +
+                                0.5 * torch.pow(z_mu, 2) - 0.5, dim=1, keepdim=False))
+    return loss
+
+
+def conditional_entropy(z_std):
+    hxy = torch.mean(torch.sum(torch.log(z_std), dim=1, keepdim=False))
+    return hxy
+
+
+def loss_nll(x, x_hat):
+    # Add variance?
+    nll = torch.nn.MSELoss(x, x_hat, reduction='mean')
+    return nll
+
+
+def loss_infovae(x, x_hat, z_mu, z_std, alpha, beta, gamma=1.0):
+    nll = loss_nll(x, x_hat)
+    hxy = conditional_entropy(z_std)
+    elbo = loss_elbo(z_mu, z_std)
+    total_loss = nll + (beta * elbo + alpha * hxy) * gamma
+    return total_loss
 
 
 class EarlyStopping(object):
