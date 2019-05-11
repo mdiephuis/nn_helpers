@@ -47,10 +47,10 @@ class DCGAN2_Encoder(nn.Module):
     def __init__(self, input_shape, out_channels, encoder_size, latent_size):
         super(DCGAN2_Encoder, self).__init__()
 
-        H_conv_out = conv_size(input_shape[-1], 4, 2, 0)
-        H_conv_out = conv_size(H_conv_out, 4, 1, 0)
-        H_conv_out = conv_size(H_conv_out, 4, 2, 0)
-        H_conv_out = conv_size(H_conv_out, 4, 1, 0)
+        H_conv_out = conv_size(input_shape[-1], 4, 2, 1)
+        H_conv_out = conv_size(H_conv_out, 3, 1, 1)
+        H_conv_out = conv_size(H_conv_out, 4, 2, 1)
+        H_conv_out = conv_size(H_conv_out, 3, 1, 1)
 
         convnet_out = np.int(H_conv_out * H_conv_out * out_channels * 2)
 
@@ -58,19 +58,19 @@ class DCGAN2_Encoder(nn.Module):
 
         self.encoder = nn.ModuleList([
             # in_channels, out_channels, kernel_size, stride=1, padding=0
-            nn.Conv2d(1, out_channels, 4, 2, padding=0),
+            nn.Conv2d(1, out_channels, 4, 2, padding=1),
             nn.LeakyReLU(),
             nn.BatchNorm2d(out_channels),
 
-            nn.Conv2d(out_channels, out_channels, 4, 1, padding=0),
+            nn.Conv2d(out_channels, out_channels, 3, 1, padding=1),
             nn.LeakyReLU(),
             nn.BatchNorm2d(out_channels),
 
-            nn.Conv2d(out_channels, out_channels * 2, 4, 2, padding=0),
+            nn.Conv2d(out_channels, out_channels * 2, 4, 2, padding=1),
             nn.LeakyReLU(),
             nn.BatchNorm2d(out_channels * 2),
 
-            nn.Conv2d(out_channels * 2, out_channels * 2, 4, 1, padding=0),
+            nn.Conv2d(out_channels * 2, out_channels * 2, 3, 1, padding=1),
             nn.LeakyReLU(),
             nn.BatchNorm2d(out_channels * 2),
 
@@ -86,10 +86,8 @@ class DCGAN2_Encoder(nn.Module):
             x = layer(x)
 
         mu = self.encoder_mu(x)
-
         std = self.encoder_std(x)
         torch.clamp(torch.sigmoid(std), min=0.01)
-
         return mu, std
 
 
@@ -99,19 +97,23 @@ class DCGAN2_Decoder(nn.Module):
         self.decoder = nn.ModuleList([
             nn.Linear(latent_size, decoder_size),
             nn.ReLU(),
+
             nn.Linear(decoder_size, H_conv_out * H_conv_out * out_channels * 2),
             nn.ReLU(),
             BatchReshape((out_channels * 2, H_conv_out, H_conv_out, )),
 
-            nn.ConvTranspose2d(out_channels * 2, out_channels, 4, 2, padding=0),
-            nn.ReLU(),
-            nn.ConvTranspose2d(out_channels * 2, out_channels, 4, 1, padding=0),
+            nn.ConvTranspose2d(out_channels * 2, out_channels, 4, 2, padding=1),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU(),
 
-            nn.ConvTranspose2d(out_channels * out_channels, out_channels, 4, 2, padding=0),
+            nn.ConvTranspose2d(out_channels, out_channels, 3, 1, padding=1),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU(),
-            nn.ConvTranspose2d(out_channels, 1, 4, 1, padding=0),
 
+            nn.ConvTranspose2d(out_channels, out_channels // 2, 4, 2, padding=1),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(out_channels // 2, 1, 3, 1, padding=1),
             nn.Sigmoid()
         ])
 
@@ -119,8 +121,6 @@ class DCGAN2_Decoder(nn.Module):
         for layer in self.decoder:
             x = layer(x)
         return x
-
-
 
 
 class DCGAN_Encoder(nn.Module):
