@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 import torch.nn.functional as F
-from nn_helpers.utils import sample_normal
-from nn_helpers.utils import type_tfloat
+from nn_helpers.utils import sample_normal, type_tfloat
+from nn_helpers.utils import nan_check_and_break, nan_check, zero_check_and_break
 
 
 def loss_bce_kld(x, x_hat, mu, log_var):
@@ -46,7 +46,7 @@ def max_mean_discrepancy(p, q, kernel_func, sigma, use_cuda):
 
 
 def loss_mmd(x, x_hat, z, sigma, use_cuda):
-    ''' 
+    '''
     Maximizing Variational Autoencoders (MMD-VAE) loss
     '''
     true_samples = sample_normal(z.size(), use_cuda)
@@ -59,9 +59,9 @@ def loss_mmd(x, x_hat, z, sigma, use_cuda):
 
 
 def loss_elbo(z_mu, z_std):
-    loss = torch.mean(torch.sum(-torch.log(z_std) + 0.5 * torch.pow(z_std, 2) +
+    elbo = torch.mean(torch.sum(-torch.log(z_std) + 0.5 * torch.pow(z_std, 2) +
                                 0.5 * torch.pow(z_mu, 2) - 0.5, dim=1, keepdim=False))
-    return loss
+    return elbo
 
 
 def conditional_entropy(z_std):
@@ -71,7 +71,8 @@ def conditional_entropy(z_std):
 
 def loss_nll(x, x_hat):
     # Add variance?
-    nll = torch.nn.MSELoss(x, x_hat, reduction='mean')
+    nll_func = torch.nn.MSELoss(reduction='mean')
+    nll = nll_func(x, x_hat)
     return nll
 
 
@@ -80,6 +81,11 @@ def loss_infovae(x, x_hat, z_mu, z_std, alpha, beta, gamma=1.0):
     hxy = conditional_entropy(z_std)
     elbo = loss_elbo(z_mu, z_std)
     total_loss = nll + (beta * elbo + alpha * hxy) * gamma
+
+    nan_check_and_break(nll, 'nll')
+    nan_check_and_break(elbo, 'elbo')
+    nan_check_and_break(hxy, 'entropy')
+    nan_check_and_break(total_loss, 'total_loss')
     return total_loss
 
 
