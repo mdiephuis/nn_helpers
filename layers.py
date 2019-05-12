@@ -87,7 +87,7 @@ class DCGAN2_Encoder(nn.Module):
 
         mu = self.encoder_mu(x)
         std = self.encoder_std(x)
-        torch.clamp(torch.sigmoid(std), min=0.01)
+        std = torch.clamp(torch.sigmoid(std), min=0.01)
         return mu, std
 
 
