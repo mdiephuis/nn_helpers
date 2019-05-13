@@ -80,10 +80,10 @@ def loss_nll(x, x_hat):
 
 def loss_infovae(x, x_hat, z_mu, z_std, alpha, beta, use_cuda, gamma=1.0):
     nll = loss_nll(x, x_hat)
-    #hxy = conditional_entropy(z_std)
-    mmd = loss_mmd(z,use_cuda)
+    # hxy = conditional_entropy(z_std)
+    mmd = loss_mmd(z_mu, use_cuda)
     elbo = loss_elbo(z_mu, z_std)
-    total_loss = nll + (beta * elbo + alpha * hxy) * gamma
+    total_loss = nll + (beta * elbo + alpha) * gamma
 
     nan_check_and_break(nll, 'nll')
     nan_check_and_break(elbo, 'elbo')
