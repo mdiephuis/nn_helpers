@@ -26,23 +26,25 @@ def MSE_kernel(p, q, sigma, use_cuda):
     loss_func = torch.nn.MSELoss(reduction='mean')
     nom = - loss_func(p_tiled, q_tiled)
 
-    const_val = type_tfloat(use_cuda)(1).zero_() + 2.0
-    sigma = type_tfloat(use_cuda)(1).zero_() + sigma
-    denom = torch.mul(const_val, torch.pow(sigma, 2))
+    #const_val = type_tfloat(use_cuda)(1).zero_() + 2.0
+    #sigma = type_tfloat(use_cuda)(1).zero_() + sigma
+    #denom = torch.mul(const_val, torch.pow(sigma, 2))
+    denom = p.size(1)
 
-    return torch.exp(torch.div(nom, denom)).item()
+
+    return torch.exp(torch.div(nom, denom))
 
 
-def max_mean_discrepancy(p, q, kernel_func, sigma, use_cuda):
+def max_mean_discrepancy(p, q, kernel_func):
     '''
     Maximum Mean Discrepancy based loss using kernel embedding trick
     Two distributions are identical iff all their moments are the same. (Gretton, 2007)
     '''
-    pp = kernel_func(p, p, sigma, use_cuda)
-    qq = kernel_func(q, q, sigma, use_cuda)
-    pq = kernel_func(p, q, sigma, use_cuda)
+    pp = kernel_func(p, p)
+    qq = kernel_func(q, q)
+    pq = kernel_func(p, q)
 
-    return pp + qq - 2 * pq
+    return torch.mean(pp + qq - 2 * pq)
 
 
 def loss_mmd(x, x_hat, z, sigma, use_cuda):
@@ -50,12 +52,12 @@ def loss_mmd(x, x_hat, z, sigma, use_cuda):
     Maximizing Variational Autoencoders (MMD-VAE) loss
     '''
     true_samples = sample_normal(z.size(), use_cuda)
-    mmd = max_mean_discrepancy(true_samples, z, MSE_kernel, sigma, use_cuda)
+    mmd = max_mean_discrepancy(true_samples, z, MSE_kernel)
 
-    nll_func = torch.nn.MSELoss(reduction='mean')
-    nll = nll_func(x, x_hat)
+    #nll_func = torch.nn.MSELoss(reduction='mean')
+    #nll = nll_func(x, x_hat)
 
-    return mmd + nll
+    return mmd
 
 
 def loss_elbo(z_mu, z_std):
@@ -76,15 +78,16 @@ def loss_nll(x, x_hat):
     return nll
 
 
-def loss_infovae(x, x_hat, z_mu, z_std, alpha, beta, gamma=1.0):
+def loss_infovae(x, x_hat, z_mu, z_std, alpha, beta, use_cuda, gamma=1.0):
     nll = loss_nll(x, x_hat)
-    hxy = conditional_entropy(z_std)
+    #hxy = conditional_entropy(z_std)
+    mmd = loss_mmd(z,use_cuda)
     elbo = loss_elbo(z_mu, z_std)
     total_loss = nll + (beta * elbo + alpha * hxy) * gamma
 
     nan_check_and_break(nll, 'nll')
     nan_check_and_break(elbo, 'elbo')
-    nan_check_and_break(hxy, 'entropy')
+    nan_check_and_break(mmd, 'mmd')
     nan_check_and_break(total_loss, 'total_loss')
     return total_loss
 
