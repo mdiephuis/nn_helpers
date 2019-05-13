@@ -19,7 +19,7 @@ def loss_bce_kld(x, x_hat, mu, log_var):
     return KLD + BCE
 
 
-def MSE_kernel(p, q, sigma, use_cuda):
+def MSE_kernel(p, q):
     p_tiled = p.expand(p.size(0), q.size(0), p.size(1))
     q_tiled = q.expand(p.size(0), q.size(0), p.size(1)).transpose(0, 1)
 
@@ -47,7 +47,7 @@ def max_mean_discrepancy(p, q, kernel_func):
     return torch.mean(pp + qq - 2 * pq)
 
 
-def loss_mmd(x, x_hat, z, sigma, use_cuda):
+def loss_mmd(x, x_hat, z, use_cuda):
     '''
     Maximizing Variational Autoencoders (MMD-VAE) loss
     '''
@@ -81,7 +81,7 @@ def loss_nll(x, x_hat):
 def loss_infovae(x, x_hat, z_mu, z_std, alpha, beta, use_cuda, gamma=1.0):
     nll = loss_nll(x, x_hat)
     # hxy = conditional_entropy(z_std)
-    mmd = loss_mmd(z_mu, use_cuda)
+    mmd = loss_mmd(z_mu, x_hat, z_mu, use_cuda)
     elbo = loss_elbo(z_mu, z_std)
     total_loss = nll + (beta * elbo + alpha) * gamma
 
