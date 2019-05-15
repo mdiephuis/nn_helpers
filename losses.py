@@ -73,7 +73,7 @@ def conditional_entropy(z_std):
 
 def loss_nll(x, x_hat):
     # Add variance?
-    nll_func = torch.nn.MSELoss(reduction='mean')
+    nll_func = torch.nn.MSELoss(reduction='sum')
     nll = nll_func(x, x_hat)
     return nll
 
