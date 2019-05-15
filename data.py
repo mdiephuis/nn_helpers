@@ -13,20 +13,17 @@ class Loader(object):
         # NOTE: will need a refractor one we load more different datasets, that require custom classes
         loader_map = {
             'mnist': datasets.MNIST,
+            'MNIST': datasets.MNIST,
+            'FashionMNIST': datasets.FashionMNIST,
             'fashion': datasets.FashionMNIST
         }
 
         num_class = {
             'mnist': 10,
-            'fashion': 10
+            'MNIST': 10,
+            'fashion': 10,
+            'FashionMNIST': 10
         }
-
-        # If download true and target dir doesn't exist, save into new dir named after the dataset
-        # and append this new dir to loader file_path
-        if download is True:
-            file_path = os.path.join(file_path, dataset_ident)
-            if not os.path.isdir(file_path):
-                os.makedirs(file_path)
 
         # Get the datasets
         train_dataset, test_dataset = self.get_dataset(loader_map[dataset_ident], file_path, download,
