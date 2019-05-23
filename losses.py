@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import torch.nn.functional as F
+import torch.distributions as D
 from nn_helpers.utils import sample_normal, type_tfloat
 from nn_helpers.utils import nan_check_and_break, nan_check, zero_check_and_break
 
@@ -61,9 +62,13 @@ def loss_mmd(x, x_hat, z, use_cuda):
 
 
 def loss_elbo(z_mu, z_std):
-    elbo = torch.mean(torch.sum(-torch.log(z_std) + 0.5 * torch.pow(z_std, 2) +
+    elbo = torch.mean(torch.sum(-torch.log(z_std) + 0.5 * z_std +
                                 0.5 * torch.pow(z_mu, 2) - 0.5, dim=1, keepdim=False))
     return elbo
+
+
+def kl_div_gaussian(z_mu, z_std):
+    return torch.mean(-0.5 * torch.sum(1 + z_std - torch.pow(z_mu, 2) - torch.exp(z_std), dim=1), dim=0)
 
 
 def conditional_entropy(z_std):
