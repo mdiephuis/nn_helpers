@@ -32,7 +32,6 @@ def MSE_kernel(p, q):
     #denom = torch.mul(const_val, torch.pow(sigma, 2))
     denom = p.size(1)
 
-
     return torch.exp(torch.div(nom, denom))
 
 
@@ -62,13 +61,12 @@ def loss_mmd(x, x_hat, z, use_cuda):
 
 
 def loss_elbo(z_mu, z_std):
-    elbo = torch.mean(torch.sum(-torch.log(z_std) + 0.5 * z_std +
-                                0.5 * torch.pow(z_mu, 2) - 0.5, dim=1, keepdim=False))
+    elbo = torch.mean(0.5 * torch.sum(torch.pow(z_std, 2) + torch.pow(z_mu, 2) - torch.log(torch.pow(z_std, 2)), dim=1, keepdim=False))
     return elbo
 
 
 def kl_div_gaussian(z_mu, z_std):
-    return torch.mean(-0.5 * torch.sum(1 + z_std - torch.pow(z_mu, 2) - torch.exp(z_std), dim=1), dim=0)
+    return torch.mean(0.5 * torch.sum(torch.pow(z_std, 2) + torch.pow(z_mu, 2) - torch.log(torch.pow(z_std, 2)) - 1, dim=1), dim=0)
 
 
 def conditional_entropy(z_std):
