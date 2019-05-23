@@ -6,6 +6,12 @@ from nn_helpers.utils import sample_normal, type_tfloat
 from nn_helpers.utils import nan_check_and_break, nan_check, zero_check_and_break
 
 
+def loss_bce(x, x_hat):
+    BCE = F.binary_cross_entropy(
+        x_hat.view(-1, 1), x.view(-1, 1), reduction='sum')
+    return BCE
+
+
 def loss_bce_kld(x, x_hat, mu, log_var):
     """
     see Appendix B from VAE paper:
@@ -27,9 +33,6 @@ def MSE_kernel(p, q):
     loss_func = torch.nn.MSELoss(reduction='mean')
     nom = - loss_func(p_tiled, q_tiled)
 
-    #const_val = type_tfloat(use_cuda)(1).zero_() + 2.0
-    #sigma = type_tfloat(use_cuda)(1).zero_() + sigma
-    #denom = torch.mul(const_val, torch.pow(sigma, 2))
     denom = p.size(1)
 
     return torch.exp(torch.div(nom, denom))
@@ -54,9 +57,6 @@ def loss_mmd(x, x_hat, z, use_cuda):
     true_samples = sample_normal(z.size(), use_cuda)
     mmd = max_mean_discrepancy(true_samples, z, MSE_kernel)
 
-    #nll_func = torch.nn.MSELoss(reduction='mean')
-    #nll = nll_func(x, x_hat)
-
     return mmd
 
 
@@ -74,21 +74,21 @@ def conditional_entropy(z_std):
     return hxy
 
 
-def loss_nll(x, x_hat):
+def loss_mse(x, x_hat):
     # Add variance?
-    nll_func = torch.nn.MSELoss(reduction='sum')
-    nll = nll_func(x, x_hat)
-    return nll
+    mse_func = torch.nn.MSELoss(reduction='sum')
+    mse = mse_func(x, x_hat)
+    return mse
 
 
 def loss_infovae(x, x_hat, z_mu, z_std, alpha, beta, use_cuda, gamma=1.0):
-    nll = loss_nll(x, x_hat)
+    mse = loss_mse(x, x_hat)
     # hxy = conditional_entropy(z_std)
     mmd = loss_mmd(z_mu, x_hat, z_mu, use_cuda)
     elbo = loss_elbo(z_mu, z_std)
-    total_loss = nll + (beta * elbo + alpha) * gamma
+    total_loss = mse + (beta * elbo + alpha) * gamma
 
-    nan_check_and_break(nll, 'nll')
+    nan_check_and_break(mse, 'mse')
     nan_check_and_break(elbo, 'elbo')
     nan_check_and_break(mmd, 'mmd')
     nan_check_and_break(total_loss, 'total_loss')
