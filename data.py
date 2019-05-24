@@ -30,7 +30,7 @@ class Loader(object):
                                                        data_transform, target_transform)
         # Set the loaders
         self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle, **kwargs)
-        self.test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, **kwargs)
+        self.test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=shuffle, **kwargs)
 
         # infer and set size, idea from:
         # https://github.com/jramapuram/helpers/
