@@ -134,3 +134,42 @@ class EarlyStopping(object):
             self.is_better = lambda a, best: a < best - min_delta
         if mode == 'max':
             self.is_better = lambda a, best: a > best + min_delta
+
+
+def gauss_kernel(size=5, sigma=1.0,n_channels=1, cuda=False):
+    grid = np.float32(np.mgrid[0:size, 0:size].T)
+    gaussian = lambda x: np.exp((x - size // 2) ** 2 / (-2 * sigma ** 2)) ** 2
+    kernel = np.sum(gaussian(grid), axis=2)
+    kernel /= np.sum(kernel)
+    kernel = np.tile(kernel, (n_channels, 1, 1))
+    kernel = torch.FloatTensor(kernel[:, None, :, :])
+    if cuda:
+        kernel = kernel.cuda()
+    return kernel
+
+def conv_gauss(img, kernel):
+    n_channels, _, kw, kh = kernel.shape
+    img = F.pad(img, (kw // 2, kh // 2, kw // 2, kh // 2), mode='replicate')
+    conv_img = F.conv2d(img, kernel, groups=n_channels)
+    return conv_img
+
+def laplacian_pyramid(img, kernel, max_levels=5):
+    current_img = img
+    pyramid_img = []
+    
+    for level in range(max_levels):
+        conv_img = conv_gauss(current_img, kernel)
+        diff = current_img - conv_img
+        pyramid_img.append(diff)
+        current_img = F.avg_pool2d(conv_img, 2)
+    
+    pyramid_img.append(current_img)
+    return pyramid_img
+
+def laploss(img1,img2, max_levels=3, kernel=None, k_size=5, sigma=2.0):
+    
+    if kernel is None or kernel.shape[1] != img1.shape[1]:
+        kernel = gauss_kernel(size=k_size, sigma=sigma,n_channels=img1.shape[1], cuda=img1.is_cuda)
+    pyramid_img1 = laplacian_pyramid(img1, kernel,max_levels)
+    pyramid_img2 = laplacian_pyramid(img2, kernel, max_levels)
+    return sum(F.l1_loss(a, b) for a, b in zip(pyramid_img1, pyramid_img2))
