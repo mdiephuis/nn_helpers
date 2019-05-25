@@ -137,6 +137,8 @@ class EarlyStopping(object):
 
 
 def gauss_kernel(size=5, sigma=1.0,n_channels=1, cuda=False):
+    if size % 2 != 1:
+        raise ValueError("kernel size must be uneven")
     grid = np.float32(np.mgrid[0:size, 0:size].T)
     gaussian = lambda x: np.exp((x - size // 2) ** 2 / (-2 * sigma ** 2)) ** 2
     kernel = np.sum(gaussian(grid), axis=2)
@@ -167,7 +169,6 @@ def laplacian_pyramid(img, kernel, max_levels=5):
     return pyramid_img
 
 def laploss(img1,img2, max_levels=3, kernel=None, k_size=5, sigma=2.0):
-    
     if kernel is None or kernel.shape[1] != img1.shape[1]:
         kernel = gauss_kernel(size=k_size, sigma=sigma,n_channels=img1.shape[1], cuda=img1.is_cuda)
     pyramid_img1 = laplacian_pyramid(img1, kernel,max_levels)
