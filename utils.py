@@ -131,6 +131,14 @@ def init_weights(module):
 
 
 def pca_project(x, num_elem=2):
+
+    if isinstance(x, torch.Tensor) and len(x.size()) == 3:
+        batch_proj = []
+        for batch_ind in range(x.size(0)):
+            tensor_proj = pca_project(x[batch_ind].squeeze(0), num_elem)
+            batch_proj.append(tensor_proj)
+        return torch.cat(batch_proj)
+
     xm = x - torch.mean(x, 1, keepdim=True)
     xx = torch.matmul(xm, torch.transpose(xm, 0, -1))
     u, s, _ = torch.svd(xx)
