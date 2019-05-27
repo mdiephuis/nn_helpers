@@ -130,6 +130,14 @@ def init_weights(module):
                 init_weights(sub_mod)
 
 
+def pca_project(x, num_elem=2):
+    xm = x - torch.mean(x, 1, keepdim=True)
+    xx = torch.matmul(xm, torch.transpose(xm, 0, -1))
+    u, s, _ = torch.svd(xx)
+    x_proj = torch.matmul(u[:, 0:num_elem], torch.diag(s[0:num_elem]))
+    return x_proj
+
+
 def plot_tensor_grid(batch_tensor, save_filename=None):
     ''' Helper to visualize a batch of images.
         A non-None filename saves instead of doing a show()
