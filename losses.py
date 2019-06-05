@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
 import torch.distributions as D
@@ -95,45 +96,43 @@ def loss_infovae(x, x_hat, z_mu, z_std, alpha, beta, use_cuda, gamma=1.0):
     return total_loss
 
 
-def gauss_kernel(size=5, sigma=1.0, n_channels=1, use_cuda=False):
-    if size % 2 != 1:
+def gauss_kernel(k_size=5, sigma=1.0):
+    if k_size % 2 != 1:
         raise ValueError("kernel size must be uneven")
-    grid = np.float32(np.mgrid[0:size, 0:size].T)
-    gaussian = lambda x: np.exp((x - size // 2) ** 2 / (-2 * sigma ** 2)) ** 2
-    kernel = np.sum(gaussian(grid), axis=2)
-    kernel /= np.sum(kernel)
-    kernel = np.tile(kernel, (n_channels, 1, 1))
-    kernel = type_tfloat(use_cuda)(kernel)
+
+    x = torch.linspace(- k_size / 2, k_size / 2, k_size)
+    grid = torch.stack([x.repeat(k_size, 1).t().contiguous().view(-1), x.repeat(k_size)], 1)
+
+    distsq = torch.pow(grid[:, 0], 2) + torch.pow(grid[:, 1], 2)
+    denom = torch.pow(torch.Tensor([sigma]), 2) * 2.0
+    kernel = torch.exp(- distsq / denom)
+    kernel /= torch.sum(kernel)
+    kernel = torch.reshape(kernel, (k_size, k_size))
     return kernel
 
 
-def conv_gauss(img, kernel):
-    n_channels, _, kw, kh = kernel.shape
-    img = F.pad(img, (kw // 2, kh // 2, kw // 2, kh // 2), mode='replicate')
-    conv_img = F.conv2d(img, kernel, groups=n_channels)
-    return conv_img
+def dog_pyramid(im, n_levels=5, k_size=15, sigma=4.0):
+
+    kernel = gauss_kernel(k_size, sigma)
+    kernel = kernel.unsqueeze(0).unsqueeze(0)
+
+    func_pad = nn.ReplicationPad2d((k_size // 2, k_size // 2, k_size // 2, k_size // 2))
+    curr_im = im
+    n_levels = 5
+    log_pyr = []
+    for i in range(n_levels):
+        conv_im = F.conv2d(func_pad(curr_im), kernel)
+        diff = curr_im - conv_im
+        log_pyr.append(diff)
+        curr_im = F.avg_pool2d(conv_im, 2)
+
+    return log_pyr
 
 
-def laplacian_pyramid(img, kernel, max_levels=5):
-    current_img = img
-    pyramid_img = []
-
-    for level in range(max_levels):
-        conv_img = conv_gauss(current_img, kernel)
-        diff = current_img - conv_img
-        pyramid_img.append(diff)
-        current_img = F.avg_pool2d(conv_img, 2)
-
-    pyramid_img.append(current_img)
-    return pyramid_img
-
-
-def loss_laplacian(img1, img2, max_levels=3, kernel=None, k_size=5, sigma=2.0):
-    if kernel is None or kernel.shape[1] != img1.shape[1]:
-        kernel = gauss_kernel(size=k_size, sigma=sigma,n_channels=img1.shape[1], cuda=img1.is_cuda)
-    pyramid_img1 = laplacian_pyramid(img1, kernel,max_levels)
-    pyramid_img2 = laplacian_pyramid(img2, kernel, max_levels)
-    return sum(F.l1_loss(a, b) for a, b in zip(pyramid_img1, pyramid_img2))
+def loss_dog(im1, im2, n_levels=5, k_size=5, sigma=2.0):
+    pyramid_im1 = dog_pyramid(im1, n_levels, k_size, sigma)
+    pyramid_im2 = dog_pyramid(im2, n_levels, k_size, sigma)
+    return sum(F.l1_loss(a, b) for a, b in zip(pyramid_im1, pyramid_im2)) / n_levels
 
 
 class EarlyStopping(object):
