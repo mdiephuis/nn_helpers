@@ -135,6 +135,18 @@ def loss_dog(im1, im2, n_levels=5, k_size=5, sigma=2.0, use_cuda=False):
     pyramid_im2 = dog_pyramid(im2, n_levels, k_size, sigma, use_cuda)
     return sum(F.l1_loss(a, b) for a, b in zip(pyramid_im1, pyramid_im2)) / n_levels
 
+class lap_loss(nn.Module):
+    def __init__(self, n_levels=5, k_size=5, sigma=2.0,use_cuda=False):
+        super(lap_loss, self).__init__()
+        self.n_levels = n_levels
+        self.k_size = k_size
+        self.sigma = sigma
+        self.use_cuda = use_cuda
+    def forward(self, im1,im2):
+        pyramid_im1 = dog_pyramid(im1, self.n_levels, self.k_size, self.sigma, self.use_cuda)
+        pyramid_im2 = dog_pyramid(im2, self.n_levels, self.k_size, self.sigma, self.use_cuda)
+        return sum(F.l1_loss(a, b) for a, b in zip(pyramid_im1, pyramid_im2)) / self.n_levels
+
 
 class EarlyStopping(object):
     def __init__(self, mode='min', min_delta=0, patience=10):
