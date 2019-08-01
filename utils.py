@@ -82,6 +82,14 @@ def one_hot(labels, n_class):
     return mask.scatter_(1, labels, 1)
 
 
+def hot2label_np(x):
+    return np.argmax(x, axis=1)
+
+
+def hot2label(x):
+    return type_tlong()(torch.argmax(x.type(torch.LongTensor), dim=1))
+
+
 def nan_check_and_break(tensor, name=""):
     if isinstance(input, list) or isinstance(input, tuple):
         for tensor in input:
