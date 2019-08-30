@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.nn import init
 import torchvision
 
 
@@ -130,9 +129,9 @@ def all_zero_check_and_break(tensor, name=""):
 def init_weights(module):
     for m in module.modules():
         if isinstance(m, nn.Linear) or isinstance(m, nn.ConvTranspose2d):
-            init.xavier_uniform_(m.weight.data)
+            nn.init.xavier_uniform_(m.weight.data)
             if hasattr(m, 'bias') and m.bias is not None:
-                init.constant_(m.bias, 0.0)
+                nn.init.constant_(m.bias, 0.0)
         elif isinstance(m, nn.Sequential):
             for sub_mod in m:
                 init_weights(sub_mod)
