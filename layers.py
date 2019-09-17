@@ -43,6 +43,20 @@ class Squeeze(nn.Module):
         return x.squeeze()
 
 
+class LambdaLayer(nn.Module):
+    """
+    Usage: model.add(Lambda(lambda x: x ** 2))
+
+    """
+
+    def __init__(self, lambd):
+        super(LambdaLayer, self).__init__()
+        self.lambd = lambd
+
+    def forward(self, x):
+        return self.lambd(x)
+
+
 class DCGAN2_Encoder(nn.Module):
     def __init__(self, input_shape, out_channels, encoder_size, latent_size):
         super(DCGAN2_Encoder, self).__init__()

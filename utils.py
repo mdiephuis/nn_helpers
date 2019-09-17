@@ -52,6 +52,10 @@ def to_cuda(tensor):
     return tensor
 
 
+def is_cuda(tensor):
+    return isinstance(tensor, torch.cuda.Tensor)
+
+
 def sample_uniform(shape, use_cuda, a=-1, b=1):
     shape = list(shape) if isinstance(shape, tuple) else shape
     return type_tfloat(use_cuda)(*shape).uniform_(a, b)
